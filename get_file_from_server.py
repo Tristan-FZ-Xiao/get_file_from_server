@@ -5,6 +5,8 @@ import time
 server_url = "http://nat-traversal.tplinkcloud.com:5000/download/"
 server_login = "http://nat-traversal.tplinkcloud.com:5000/login"
 
+email_list = []
+
 buf = "%0.0f" % time.time()
 save_file = buf + "_data.csv"
 def get_full_server_url():
@@ -29,7 +31,7 @@ def get_year_month_info(buf):
 	tmp = re.findall(buf, '/.*/')
 	if tmp is not None:
 		print(tmp.__dict__)
-def get_url(url, cookie):
+def get_html(url, cookie):
 	g = urllib2.Request(url)
 	opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
 	g.add_header('Cookie', cookie)
@@ -55,7 +57,7 @@ def parse_files_dir(buf):
 	return tmp_re
 
 def get_single_day_files(single_day, cookie):
-	files_dir_buf = get_url(server_url + "201511/" + single_day + '/', cookie)
+	files_dir_buf = get_html(server_url + "201511/" + single_day + '/', cookie)
 	if files_dir_buf is None:
 		print "Could not get files directory"
 		return None
@@ -69,12 +71,12 @@ def get_single_day_files(single_day, cookie):
 		if tmp_name is not None:
 			print "File Name\t" + tmp_name[0]
 			full_name = server_url + "201511/" + single_day + '/' + tmp_name[0]
-			buf = get_url(full_name, cookie)
+			buf = get_html(full_name, cookie)
 			if buf is None:
-				break
+				continue
 
 			a = p2p_data()
-			a.name = file_name = tmp_name[0]
+			a.file_name = tmp_name[0]
 			for line in buf.split("\n"):
 			 	a.get_user_info(line)
 			if a.printable == True:
@@ -108,7 +110,7 @@ class p2p_data:
 		out_buf = self.result + "," + self.predict_result + "," + self.nat_type + "," +\
 			self.description + "," + self.isp + "," + self.country + "," + self.city + "," +\
 			self.network + "," + self.vendor + "," +\
-			self.model + "," + self.wan_ip + "," + self.file_name + "\n"
+			self.model + "," + self.wan_ip + "," + self.email + "," + self.file_name + "\n"
 		fd = open(file_name, "a+")
 		fd.write(out_buf)
 		fd.close
@@ -140,22 +142,30 @@ class p2p_data:
 			self.model = json_dict['Vendor']
 			self.wan_ip = json_dict['WAN']
 			self.printable = True
+			if self.email not in email_list:
+				email_list.append(self.email)
 		if 'NAT Type' in json_dict:
 			self.nat_type = json_dict['NAT Type']
-			self.printable = True
+			self.nat_type = self.nat_type.replace(", ", "_")
+			if self.nat_type.find("Independent") == 0:
+				self.predict = "Success"
 		if 'Predict Result' in json_dict:
 			self.result = json_dict['Predict Result']
-			self.printable = True
 
 if __name__ == '__main__':
 	print "hello world"
 	import sys
 	user_name = sys.argv[1]
 	password = sys.argv[2]
-
+	urllib2.socket.setdefaulttimeout(10)
 	cookie = login_server(server_login, user_name, password)
+	get_single_day_files("20", cookie)
+	get_single_day_files("21", cookie)
+	get_single_day_files("22", cookie)
 	get_single_day_files("23", cookie)
 	get_single_day_files("24", cookie)
+	for email in email_list:
+		print email
 #	buf = """{"Email":"tim.xiang@tp-link.com", "Country":"Singapore", "City":"Adjuneid", "ISP":"Starhub",\
 #	       "Network":"Office Network","Vendor": "D-LINK","Model":"DIR-868L","WAN":"27.54.61.88"}"""
 #	buf_test = """{"NAT Type":6 ,"NAT Type":"Independent Mapping, Port Dependent Filter"}"""

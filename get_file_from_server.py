@@ -3,7 +3,7 @@ import json
 
 server_url = "http://nat-traversal.tplinkcloud.com:5000/download/"
 server_login = "http://nat-traversal.tplinkcloud.com:5000/login"
-save_dir = "./data"
+save_file = "data.csv"
 
 def get_full_server_url():
 	return server_url
@@ -75,7 +75,7 @@ def get_single_day_files(single_day, cookie):
 			a.name = file_name = tmp_name[0]
 			for line in buf.split("\n"):
 			 	a.get_user_info(line)
-			a.output("hello")
+			a.output(save_file)
 
 			"""
 			if need to write to the file, use the codes.
@@ -87,26 +87,26 @@ def get_single_day_files(single_day, cookie):
 
 class p2p_data:
 	result = ""
-	predict_result = "" 
+	predict_result = "Unknow" 
 	email = "" 
 	country = "" 
 	city = ""
 	isp = "" 
-	network = ""
-	vendor = "" 
-	model = ""
-	wan_ip = "" 
+	network = "Unknow"
+	vendor = "Unknow" 
+	model = "Unknow"
+	wan_ip = "Unknow" 
 	file_name = ""
 	nat_type = "" 
-	description = ""
-	def __init(self):
+	description = "Unknow"
+	def __init__(self):
 		print "123"
 
 	def output(self, file_name):
-		out_buf = self.result + "\t" + self.predict_result + "\t" + self.nat_type + "\t" +\
-			self.description + "\t" + self.country + "\t" + self.city + "\t" +\
-			self.isp + "\t" + self.network + "\t" + self.vendor + "\t" +\
-			self.model + "\t" + self.wan_ip + "\t" + self.file_name + "\n"
+		out_buf = self.result + "," + self.predict_result + "," + self.nat_type + "," +\
+			self.description + "," + self.isp + "," + self.country + "," + self.city + "," +\
+			self.network + "," + self.vendor + "," +\
+			self.model + "," + self.wan_ip + "," + self.file_name + "\n"
 		fd = open(file_name, "a+")
 		fd.write(out_buf)
 		fd.close
@@ -140,11 +140,15 @@ class p2p_data:
 		if 'NAT Type' in json_dict:
 			self.nat_type = json_dict['NAT Type']
 		if 'Predict Result' in json_dict:
-			self.predict_result = json_dict['Predict Result']
+			self.result = json_dict['Predict Result']
 
 if __name__ == '__main__':
 	print "hello world"
-	cookie = login_server(server_login,'tplink', 'smartlife')
+	import sys
+	user_name = sys.argv[1]
+	password = sys.argv[2]
+
+	cookie = login_server(server_login, user_name, password)
 	get_single_day_files("23", cookie)
 	get_single_day_files("24", cookie)
 #	buf = """{"Email":"tim.xiang@tp-link.com", "Country":"Singapore", "City":"Adjuneid", "ISP":"Starhub",\

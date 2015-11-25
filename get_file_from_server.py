@@ -1,10 +1,12 @@
 import urllib, urllib2, cookielib, re, time
 import json
+import time
 
 server_url = "http://nat-traversal.tplinkcloud.com:5000/download/"
 server_login = "http://nat-traversal.tplinkcloud.com:5000/login"
-save_file = "data.csv"
 
+buf = "%0.0f" % time.time()
+save_file = buf + "_data.csv"
 def get_full_server_url():
 	return server_url
 
@@ -75,7 +77,8 @@ def get_single_day_files(single_day, cookie):
 			a.name = file_name = tmp_name[0]
 			for line in buf.split("\n"):
 			 	a.get_user_info(line)
-			a.output(save_file)
+			if a.printable == True:
+				a.output(save_file)
 
 			"""
 			if need to write to the file, use the codes.
@@ -99,8 +102,7 @@ class p2p_data:
 	file_name = ""
 	nat_type = "" 
 	description = "Unknow"
-	def __init__(self):
-		print "123"
+	printable = False
 
 	def output(self, file_name):
 		out_buf = self.result + "," + self.predict_result + "," + self.nat_type + "," +\
@@ -137,10 +139,13 @@ class p2p_data:
 			self.vendor = json_dict['Vendor']
 			self.model = json_dict['Vendor']
 			self.wan_ip = json_dict['WAN']
+			self.printable = True
 		if 'NAT Type' in json_dict:
 			self.nat_type = json_dict['NAT Type']
+			self.printable = True
 		if 'Predict Result' in json_dict:
 			self.result = json_dict['Predict Result']
+			self.printable = True
 
 if __name__ == '__main__':
 	print "hello world"
